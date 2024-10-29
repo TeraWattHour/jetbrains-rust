@@ -36,71 +36,68 @@ fn generate_slug() -> String {
 async fn create_post(
     State(state): State<AppState>,
     data: TypedMultipart<CreatePostRequest>,
-) -> StatusCode {
+) -> Result<(StatusCode, [(&'static str, &'static str); 1], String), AppError> {
     if let Err(_) = data.validate() {
-        return StatusCode::BAD_REQUEST;
+        return Ok((
+            StatusCode::BAD_REQUEST,
+            [("content-type", "text/plain")],
+            "Invalid request".to_string(),
+        ));
     }
 
-    let slug = generate_slug();
-
-    let now = chrono::Utc::now().timestamp();
+    let slug = format!("{}-{}.png", generate_slug(), chrono::Utc::now().timestamp());
 
     let fields = data.0;
     let mut thumbnail_path: Option<String> = None;
     let mut avatar_path: Option<String> = None;
 
-    fn cleanup(thumbnail_path: &Option<String>, avatar_path: &Option<String>) {
-        if let Some(thumbnail_path) = thumbnail_path {
-            let _ = fs::remove_file(thumbnail_path);
-        }
-        if let Some(avatar_path) = avatar_path {
-            let _ = fs::remove_file(avatar_path);
-        }
-    }
-
     if fields.thumbnail.is_some() {
-        let path = format!("images/thumbnails/{}-{}.png", slug, now);
+        let path = format!("images/thumbnails/{}", slug);
 
-        if let Err(_) = fields.thumbnail.unwrap().persist(&path) {
-            return StatusCode::INTERNAL_SERVER_ERROR;
-        };
+        fields.thumbnail.unwrap().persist(&path)?;
 
         thumbnail_path = Some(path);
     }
 
-    if let Some(avatar_url) = &fields.avatar_url {
-        let path = format!("images/avatars/{}-{}.png", slug, now);
+    fn cleanup<E>(slug: String) -> impl FnOnce(E) -> anyhow::Error
+    where
+        E: Into<anyhow::Error>,
+    {
+        move |e| {
+            let _ = fs::remove_file("images/thumbnails/".to_string() + &slug);
+            let _ = fs::remove_file("images/avatars/".to_string() + &slug);
 
-        if let Err(_) = download_and_store_png(&avatar_url, &path).await {
-            cleanup(&thumbnail_path, &avatar_path);
-
-            return StatusCode::INTERNAL_SERVER_ERROR;
+            return e.into();
         }
+    }
+
+    if let Some(avatar_url) = &fields.avatar_url {
+        let path = format!("images/avatars/{}", slug);
+
+        download_and_store_png(&avatar_url, &path)
+            .await
+            .map_err(cleanup(slug.clone()))?;
 
         avatar_path = Some(path);
     }
 
     let db = state.con.lock().unwrap();
-    let query = db.prepare(
+    let mut query = db.prepare(
         "insert into posts (content, user, avatar_url, thumbnail_url) values (?1, ?2, ?3, ?4) returning *",
-    );
+    ).map_err(cleanup(slug.clone()))?;
 
-    let Ok(mut query) = query else {
-        cleanup(&thumbnail_path, &avatar_path);
+    let post = query
+        .query_row(
+            params![&fields.content, &fields.user, &avatar_path, &thumbnail_path],
+            Post::from_row,
+        )
+        .map_err(cleanup(slug.clone()))?;
 
-        return StatusCode::INTERNAL_SERVER_ERROR;
-    };
-
-    if let Err(_) = query.query_row(
-        params![&fields.content, &fields.user, &avatar_path, &thumbnail_path],
-        Post::from_row,
-    ) {
-        cleanup(&thumbnail_path, &avatar_path);
-
-        return StatusCode::INTERNAL_SERVER_ERROR;
-    };
-
-    StatusCode::CREATED
+    Ok((
+        StatusCode::CREATED,
+        [("content-type", "text/plain")],
+        post.id.to_string(),
+    ))
 }
 
 async fn get_posts(

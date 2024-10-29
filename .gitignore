@@ -4,3 +4,5 @@
 
 !/images/thumbnails/.gitkeep
 !/images/avatars/.gitkeep
+
+db.sqlite

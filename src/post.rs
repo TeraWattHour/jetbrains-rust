@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use url::{ParseError, Url};
+use url::Url;
 
 pub struct Post {
     pub id: i32,
