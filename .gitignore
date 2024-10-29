@@ -1,0 +1,6 @@
+/target
+/images/thumbnails/*
+/images/avatars/*
+
+!/images/thumbnails/.gitkeep
+!/images/avatars/.gitkeep

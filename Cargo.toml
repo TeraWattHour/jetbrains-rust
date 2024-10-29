@@ -1,0 +1,18 @@
+[package]
+name = "jetbrains-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.91"
+axum = { version = "0.7.7", features = ["default", "macros"] }
+axum_typed_multipart = { version = "0.13.1", features = ["tempfile_3"] }
+chrono = "0.4.38"
+names = "0.14.0"
+reqwest = { version = "0.12.9", features = ["blocking"] }
+rusqlite = { version = "0.32.1", features = ["chrono"] }
+slugify = "0.1.0"
+tempfile = "3.13.0"
+tokio = { version = "1.41.0", features = ["full"] }
+tower-http = { version = "0.6.1", features = ["full"] }
+url = "2.5.2"

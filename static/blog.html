@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+
+    <style>
+      .post__thumbnail {
+        width: 100%;
+        height: 10rem;
+        object-fit: cover;
+        margin-bottom: 1rem;
+      }
+
+      .post__avatar {
+        width: 2rem;
+        height: 2rem;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="margin-top: 2rem">
+      <h3>Create a post</h3>
+      <form action="">
+        <div>
+          <label for="content">Content</label>
+          <textarea name="content" cols="30" rows="10" required></textarea>
+        </div>
+        <div>
+          <label for="thumbnail">Thumbnail </label>
+          <input type="file" name="thumbnail" multiple="false" accept="image/png" />
+          <small>.png image</small>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label for="username">Username</label>
+            <input type="text" name="username" required />
+          </div>
+          <div>
+            <label for="username">Avatar</label>
+            <input type="text" name="avatar" />
+            <small>link to a .png image</small>
+          </div>
+        </div>
+
+        <button style="display: block; width: 100%; margin-top: 2rem">Create</button>
+      </form>
+    </div>
+
+    <hr style="margin-top: 3rem" />
+
+    <div class="container" style="margin-top: 2rem">
+      <h2>Posts</h2>
+
+      <div id="posts" hx-get="/api/posts" hx-trigger="load"></div>
+    </div>
+  </body>
+</html>
