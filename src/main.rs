@@ -35,12 +35,12 @@ fn generate_slug() -> String {
 #[axum::debug_handler]
 async fn create_post(
     State(state): State<AppState>,
-    data: TypedMultipart<CreatePostRequest>,
-) -> Result<(StatusCode, [(&'static str, &'static str); 1], String), AppError> {
+    mut data: TypedMultipart<CreatePostRequest>,
+) -> Result<(StatusCode, [(&'static str, &'static str); 2], String), AppError> {
     if let Err(_) = data.validate() {
         return Ok((
             StatusCode::BAD_REQUEST,
-            [("content-type", "text/plain")],
+            [("content-type", "text/plain"), ("hx-trigger", "invalid")],
             "Invalid request".to_string(),
         ));
     }
@@ -95,7 +95,7 @@ async fn create_post(
 
     Ok((
         StatusCode::CREATED,
-        [("content-type", "text/plain")],
+        [("content-type", "text/plain"), ("hx-trigger", "new-post")],
         post.id.to_string(),
     ))
 }

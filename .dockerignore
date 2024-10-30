@@ -1,0 +1,5 @@
+target
+db.sqlite
+README.md
+images/avatars/*
+images/thumbnails/*

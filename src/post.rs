@@ -32,7 +32,7 @@ pub struct CreatePostRequest {
 }
 
 impl CreatePostRequest {
-    pub fn validate(&self) -> Result<(), String> {
+    pub fn validate(&mut self) -> Result<(), String> {
         if self.content.is_empty() {
             return Err("Content cannot be empty".to_string());
         }
@@ -50,12 +50,18 @@ impl CreatePostRequest {
         }
 
         match &self.avatar_url {
-            Some(url) => match Url::parse(url) {
-                Err(_) => {
-                    return Err("Invalid avatar URL".to_string());
+            Some(url) => {
+                if !url.is_empty() {
+                    match Url::parse(url) {
+                        Err(_) => {
+                            return Err("Invalid avatar URL".to_string());
+                        }
+                        _ => (),
+                    }
+                } else {
+                    self.avatar_url = None
                 }
-                _ => (),
-            },
+            }
             None => (),
         };
 
